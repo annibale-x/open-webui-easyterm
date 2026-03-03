@@ -1,6 +1,6 @@
 """
 title: 🖥️ EasyTerm
-version: 0.1.1
+version: 0.1.2
 author: Hannibal
 repository: https://github.com/annibale-x/open-webui-easyterm
 author_email: annibale.x@gmail.com
@@ -22,8 +22,8 @@ FORMATTING_RULES = """
 - MODE: STRICT API PASSTHROUGH.
 - ANTI-RAG DIRECTIVE: The context contains raw tool output, NOT a search document. DO NOT treat this as a RAG query. DO NOT summarize the processes. DO NOT cite sources (e.g., avoid using [1]). DO NOT use bullet points.
 - INSTRUCTION: Concatenate the fragmented `data` strings from the JSON into a single text block.
-- FORMAT: Output the exact merged text inside one single ```bash block. 
-- RULE: Zero conversational text. No preamble, no postamble. Just the code block.
+- FORMAT: Output the exact merged text inside exactly one Markdown code block. You MUST use the exact syntax tag ```bash to open the block. NEVER use plain ``` .
+- RULE: Zero conversational text. No preamble, no postamble. Just the code block and IMMEDIATLY END THE TASK.
 """
 
 
@@ -40,35 +40,25 @@ class Filter:
         Global configurations for EasyTerm.
         """
 
+        enable_trigger: bool = Field(
+            default=False,
+            description="If True, EasyTerm will only activate when the user's message starts with the trigger.",
+        )
+        trigger: str = Field(
+            default=":>",
+            description="The prefix required to trigger EasyTerm if enable_trigger is True.",
+        )
         max_command_wait: int = Field(
             default=60,
             description="Global maximum wait time (in seconds) for OpenTerminal commands.",
-        )
-        debug: bool = Field(
-            default=False,
-            description="Enable debug logging and payload dumps.",
         )
         bypass_context: bool = Field(
             default=False,
             description="If True, sends ONLY the current message to the LLM, preventing context contamination.",
         )
-
-    class UserValves(BaseModel):
-        """
-        User-specific configurations. Overrides global Valves when set.
-        """
-
-        max_command_wait: Optional[int] = Field(
-            default=30,
-            description="Override the global maximum wait time (in seconds) for your OpenTerminal commands. Leave empty to use the global default.",
-        )
-        debug: Optional[bool] = Field(
+        debug: bool = Field(
             default=False,
-            description="Override global debug preference.",
-        )
-        bypass_context: Optional[bool] = Field(
-            default=False,
-            description="Override global context bypass preference.",
+            description="Enable debug logging and payload dumps.",
         )
 
     def __init__(self):
@@ -79,22 +69,9 @@ class Filter:
         self.valves = self.Valves()
         self._message_stash = {}
 
-    def _get_override(self, user_valves, key: str, default_value):
-        """
-        Safely retrieves a configuration value, prioritizing UserValves over global Valves.
-        """
-
-        if user_valves and hasattr(user_valves, key):
-            val = getattr(user_valves, key)
-
-            if val is not None:
-                return val
-
-        return default_value
-
     def inlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
         """
-        Intercepts the request, applying context bypass, logging, and prompt injection.
+        Intercepts the request, applying trigger checks, context bypass, logging, and prompt injection.
         """
 
         terminal_id = body.get("terminal_id")
@@ -107,14 +84,22 @@ class Filter:
         if not messages:
             return body
 
-        user_valves = __user__.get("valves") if __user__ else None
-        wait_time = self._get_override(
-            user_valves, "max_command_wait", self.valves.max_command_wait
-        )
-        debug_mode = self._get_override(user_valves, "debug", self.valves.debug)
-        bypass_ctx = self._get_override(
-            user_valves, "bypass_context", self.valves.bypass_context
-        )
+        last_message_content = messages[-1].get("content", "").strip()
+
+        if self.valves.enable_trigger:
+
+            if not last_message_content.startswith(self.valves.trigger):
+
+                if self.valves.debug:
+                    logger.debug(
+                        f"[EasyTerm] Trigger '{self.valves.trigger}' not found in message. Skipping."
+                    )
+
+                return body
+
+        wait_time = self.valves.max_command_wait
+        debug_mode = self.valves.debug
+        bypass_ctx = self.valves.bypass_context
 
         if debug_mode:
             logger.debug(
@@ -170,11 +155,8 @@ class Filter:
         Intercepts the response. Restores the original context if bypass_context was active.
         """
 
-        user_valves = __user__.get("valves") if __user__ else None
-        debug_mode = self._get_override(user_valves, "debug", self.valves.debug)
-        bypass_ctx = self._get_override(
-            user_valves, "bypass_context", self.valves.bypass_context
-        )
+        debug_mode = self.valves.debug
+        bypass_ctx = self.valves.bypass_context
 
         if debug_mode:
             logger.debug("[EasyTerm] Outlet triggered.")
