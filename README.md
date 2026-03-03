@@ -41,6 +41,7 @@ During long debugging sessions, history can pollute the prompt. When `bypass_con
 | **Trigger** | `:>` | The required prefix (e.g., `:> ls -la`) if `Enable Trigger` is active. |
 | **Bypass Context** | `False` | **Recommended for mini models.** Sends only the current message to the LLM to prevent context drift. |
 | **Max Command Wait** | `60` | Fallback integer injected into the tool's `wait` parameter. |
+| **Priority** | `999999` | Sets the filter's execution priority (higher values run last). |
 | **Debug Mode** | `False` | Enables backend logging for context stash and prompt injection monitoring. |
 
 ---

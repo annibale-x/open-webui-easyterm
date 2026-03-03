@@ -5,7 +5,7 @@ author: Hannibal
 repository: https://github.com/annibale-x/open-webui-easyterm
 author_email: annibale.x@gmail.com
 author_url: https://openwebui.com/u/h4nn1b4l
-description: Mandates full command completion for OpenTerminal and forces clean formatting.
+description: Mandates full command completion for OpenTerminal and forces clean output.
 """
 
 import logging
@@ -33,8 +33,6 @@ class Filter:
     Handles context truncation, prompt injection, and OpenTerminal formatting enforcement.
     """
 
-    __priority__ = 999999
-
     class Valves(BaseModel):
         """
         Global configurations for EasyTerm.
@@ -55,6 +53,10 @@ class Filter:
         bypass_context: bool = Field(
             default=False,
             description="If True, sends ONLY the current message to the LLM, preventing context contamination.",
+        )
+        priority: int = Field(
+            default=999999, 
+            description="Filter priority"
         )
         debug: bool = Field(
             default=False,
