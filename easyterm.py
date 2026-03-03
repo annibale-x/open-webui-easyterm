@@ -56,7 +56,7 @@ class Filter:
         )
         priority: int = Field(
             default=999999, 
-            description="Filter priority"
+            description="Sets the filter's execution priority (higher values run last)."
         )
         debug: bool = Field(
             default=False,
