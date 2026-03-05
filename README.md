@@ -4,7 +4,7 @@ EasyTerm is an experimental filter designed for Open WebUI's newly released **Op
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&logoColor=white)](https://github.com/annibale-x/open-webui-easyterm)
 ![Open WebUI Plugin](https://img.shields.io/badge/Open%20WebUI-Filter-blue?style=flat&logo=openai)
-![License](https://img.shields.io/github/license/annibale-x/open-webui-easyterm?color=green)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/annibale-x/open-webui-easyterm/blob/main/LICENSE)
 
 ---
 
