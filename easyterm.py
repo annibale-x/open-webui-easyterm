@@ -1,5 +1,5 @@
 """
-title: 🖥️ EasyTerm
+title: 🖥️EasyTerm
 version: 0.1.2
 author: Hannibal
 repository: https://github.com/annibale-x/open-webui-easyterm
